@@ -5,12 +5,11 @@ using UnityEngine.AI;
 
 public class TankPatrol : MonoBehaviour
 {
-    // Start is called before the first frame update
+    public GameObject[] patrol_points;
 
-    public List<GameObject> patrol_points;
-    //private int destPoint = 0;
-    private NavMeshAgent agent;
+    private int current_point = 0;
 
+    public NavMeshAgent agent;
 
     void Start()
     {
@@ -18,30 +17,18 @@ public class TankPatrol : MonoBehaviour
 
         agent.autoBraking = false;
 
-        GotoNextPoint();
+        Patrol();
     }
-
-    void GotoNextPoint()
-    {
-      if(patrol_points.Count == 0)
-      {
-            return;
-      }
-
-      for(int i = 0; i < patrol_points.Count; i++)
-      {
-            agent.destination = patrol_points[i].GetComponentInChildren<Transform>().position;
-
-            i = (i + 1) % patrol_points.Count;
-      }
-    }
-
-
     void Update()
     {
-        // Choose the next destination point when the agent gets
-        // close to the current one.
-        if (!agent.pathPending && agent.remainingDistance < 0.5f)
-            GotoNextPoint();
+        if (!agent.pathPending && agent.remainingDistance < 1.0f) 
+            Patrol();
+    }
+    void Patrol()
+    {
+
+        agent.destination = patrol_points[current_point].gameObject.transform.position;
+
+        current_point = (current_point + 1) % patrol_points.Length;
     }
 }
