@@ -7,8 +7,8 @@ public class TankPatrol : MonoBehaviour
 {
     // Start is called before the first frame update
 
-   // public List<GameObject> patrol_points;
-    private int destPoint = 0;
+    public List<GameObject> patrol_points;
+    //private int destPoint = 0;
     private NavMeshAgent agent;
 
 
@@ -23,7 +23,17 @@ public class TankPatrol : MonoBehaviour
 
     void GotoNextPoint()
     {
-      
+      if(patrol_points.Count == 0)
+      {
+            return;
+      }
+
+      for(int i = 0; i < patrol_points.Count; i++)
+      {
+            agent.destination = patrol_points[i].GetComponentInChildren<Transform>().position;
+
+            i = (i + 1) % patrol_points.Count;
+      }
     }
 
 
