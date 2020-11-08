@@ -29,7 +29,7 @@ namespace Complete
         private void OnEnable ()
         {
             // When the tank is turned on, make sure it's not kinematic.
-            m_Rigidbody.isKinematic = false;
+            m_Rigidbody.isKinematic = true;
 
             // Also reset the input values.
             m_MovementInputValue = 0f;

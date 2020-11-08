@@ -23,6 +23,7 @@ namespace Complete
         private TankShooting m_Shooting;                        // Reference to tank's shooting script, used to disable and enable control.
         private GameObject m_CanvasGameObject;                  // Used to disable the world space UI during the Starting and Ending phases of each round.
 
+        [HideInInspector] public GameObject m_target;
 
         public void Setup ()
         {
@@ -47,6 +48,7 @@ namespace Complete
                 // ... set their material color to the color specific to this tank.
                 renderers[i].material.color = m_PlayerColor;
             }
+
         }
 
 

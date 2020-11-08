@@ -31,8 +31,6 @@ namespace Complete
         private string m_fireButton;                // The input axis that is used for launching shells.
         private bool m_fired;                       // Whether or not the shell has been launched with this button press.
 
-        //public MeshRenderer m_turret_renderer;
-
         private void OnEnable()
         {
             m_Shooting_Radius = Get_Max_Shooting_Range();
@@ -49,13 +47,12 @@ namespace Complete
         // Student added
         private void Update()
         {
-            Aim_At_Tank();
 
             if (m_fired)
             {
                 m_Shooting_Cooldown_Current += Time.deltaTime;
 
-                if (m_Shooting_Cooldown_Current >= m_Shooting_Cooldown)             //Cooldown management
+                if (m_Shooting_Cooldown_Current >= m_Shooting_Cooldown)          
                 {
                     m_fired = false;
                     m_Shooting_Cooldown_Current = 0.0f;
@@ -85,27 +82,16 @@ namespace Complete
             }
         }
 
-        // Aim 
-        private void Aim_At_Tank()
-        {
-           
-            //Vector3 new_forward = m_tank_transform.position - transform.position;                                 // Getting new vector.
-
-            //m_turret_renderer.transform.forward = new_forward;                                                      // Redirecting the turret_transform with the new vector.
-            //m_FireTransform.forward = m_turret_renderer.transform.forward;                                          // Also applying the new forward vector to the fire_transform.
-        }
-
-
         // Get maximum radius range
         private float Get_Max_Shooting_Range()
         {
-            float g = Physics.gravity.y;                                       // Gravity.
-            float p = m_LaunchForce;                                           // Shell Speed (Constant).
-            float m = 45.0f;                                                   // Following Projectile Motion, max range occurs in a 45º angle.
+            float g = Physics.gravity.y;                                      
+            float p = m_LaunchForce;                                          
+            float m = 45.0f;                                                  
 
-            float Max_Shooting_Range = ((p * p) * Mathf.Sin(2 * m)) / g;       // Projectile motion equation.
+            float Max_Shooting_Range = ((p * p) * Mathf.Sin(2 * m)) / g;      
 
-            Max_Shooting_Range = Mathf.Abs(Max_Shooting_Range);                // Absolute Value for negative outcomes.
+            Max_Shooting_Range = Mathf.Abs(Max_Shooting_Range);               
 
             Debug.Log(Max_Shooting_Range);
 
@@ -132,12 +118,12 @@ namespace Complete
         {
             float Distance_To_Tank = Vector3.Distance(m_FireTransform.position, m_tank_transform.position);
 
-            if (Distance_To_Tank < m_Shooting_Radius)                                       // Tank within shooting radius.
+            if (Distance_To_Tank < m_Shooting_Radius)                                      
             {
                 // tan(a) = (v^2 +- sqrt(v^4 - g(gx^2 + 2yv^2))) / gx;
-                float g = Physics.gravity.y;                                                 // Gravity.
-                float p = m_LaunchForce;                                                     // Shell Speed (Constant)
-                float x = Distance_To_Tank;                                                  // Distance to the tank.
+                float g = Physics.gravity.y;                                               
+                float p = m_LaunchForce;                                                   
+                float x = Distance_To_Tank;                                                
                 float y = m_tank_transform.position.y;                                  
 
                 if (y < 0.0f)                                                           
@@ -163,13 +149,13 @@ namespace Complete
             
         }
 
-        private float Test_Suitable_Angle(double angle)                                  // Test_Suitable_Angle returns the angle in degrees, with 0 if an error is detected.
+        private float Test_Suitable_Angle(double angle)                           
         {
             float ret = 0.0f;
 
             float posible_angle = Math.Abs((float)angle * Mathf.Rad2Deg);
 
-            if ((posible_angle > m_Min_Angle && posible_angle < m_Max_Angle))                            // Angle is within max, min limits.    
+            if ((posible_angle > m_Min_Angle && posible_angle < m_Max_Angle))     
             {
                 ret = posible_angle;
             }
