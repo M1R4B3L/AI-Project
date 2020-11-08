@@ -111,8 +111,8 @@ namespace Complete
         private void FixedUpdate ()
         {
             // Adjust the rigidbodies position and orientation in FixedUpdate.
-            Move ();
-            Turn ();
+            //Move ();
+            //Turn ();
         }
 
         private void Move ()

@@ -21,8 +21,15 @@ public class TankPatrol : MonoBehaviour
     }
     void Update()
     {
-        if (!agent.pathPending && agent.remainingDistance < 1.0f) 
+        if (!agent.pathPending && agent.remainingDistance < 1.0f)
+        {
+            agent.autoBraking = true;
             Patrol();
+        }
+        else
+        {
+            agent.autoBraking = false;
+        }
     }
     void Patrol()
     {

@@ -9,6 +9,7 @@ public class TankWander : MonoBehaviour
 
     void Start()
     {
+
         agent = GetComponent<NavMeshAgent>();
     }
 
