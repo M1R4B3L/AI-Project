@@ -1,4 +1,5 @@
-﻿using UnityEngine;
+﻿using System;
+using UnityEngine;
 using UnityEngine.UI;
 
 namespace Complete
@@ -8,97 +9,197 @@ namespace Complete
         public int m_PlayerNumber = 1;              // Used to identify the different players.
         public Rigidbody m_Shell;                   // Prefab of the shell.
         public Transform m_FireTransform;           // A child of the tank where the shells are spawned.
-        public Slider m_AimSlider;                  // A child of the tank that displays the current launch force.
         public AudioSource m_ShootingAudio;         // Reference to the audio source used to play the shooting audio. NB: different to the movement audio source.
-        public AudioClip m_ChargingClip;            // Audio that plays when each shot is charging up.
         public AudioClip m_FireClip;                // Audio that plays when each shot is fired.
-        public float m_MinLaunchForce = 15f;        // The force given to the shell if the fire button is not held.
-        public float m_MaxLaunchForce = 30f;        // The force given to the shell if the fire button is held for the max charge time.
-        public float m_MaxChargeTime = 0.75f;       // How long the shell can charge for before it is fired at max force.
+
+        // Student added
+        public GameObject target;
+        public Transform m_tank_transform;
+        public float m_LaunchForce = 20.0f;              // The force given to the shell. Constant
+        public float m_Max_Angle = 60.0f;                // Max angle of the trajectory.
+        public float m_Min_Angle = 0.0f;                 // Min angleof the trajectory.
+        public float m_Shooting_Cooldown = 3.0f;         // Minimum time between each shot.
+        public float m_Shooting_Cooldown_Current = 0.0f; // Starting cooldown.
+        public float m_Shooting_Angle = 0.0f;            // Starting shooting angle.
+        public float m_Shooting_Radius = 0.0f;           // Radius range of the shells.
 
 
-        private string m_FireButton;                // The input axis that is used for launching shells.
-        private float m_CurrentLaunchForce;         // The force that will be given to the shell when the fire button is released.
-        private float m_ChargeSpeed;                // How fast the launch force increases, based on the max charge time.
-        private bool m_Fired;                       // Whether or not the shell has been launched with this button press.
+        public bool m_Shooting_Angle_Found = false;   // Angle needed to hit target.
+        public bool m_AI_Controlled = true;           // For testing porpouses we can switch between AI and player controll.
+        //
 
+        private string m_fireButton;                // The input axis that is used for launching shells.
+        private bool m_fired;                       // Whether or not the shell has been launched with this button press.
+
+        //public MeshRenderer m_turret_renderer;
 
         private void OnEnable()
         {
-            // When the tank is turned on, reset the launch force and the UI
-            m_CurrentLaunchForce = m_MinLaunchForce;
-            m_AimSlider.value = m_MinLaunchForce;
+            m_Shooting_Radius = Get_Max_Shooting_Range();
         }
 
 
         private void Start ()
         {
             // The fire axis is based on the player number.
-            m_FireButton = "Fire" + m_PlayerNumber;
+            m_fireButton = "Fire" + m_PlayerNumber;
 
-            // The rate that the launch force charges up is the range of possible forces by the max charge time.
-            m_ChargeSpeed = (m_MaxLaunchForce - m_MinLaunchForce) / m_MaxChargeTime;
         }
 
-
-        private void Update ()
+        // Student added
+        private void Update()
         {
-            // The slider should have a default value of the minimum launch force.
-            m_AimSlider.value = m_MinLaunchForce;
+            Aim_At_Tank();
 
-            // If the max force has been exceeded and the shell hasn't yet been launched...
-            if (m_CurrentLaunchForce >= m_MaxLaunchForce && !m_Fired)
+            if (m_fired)
             {
-                // ... use the max force and launch the shell.
-                m_CurrentLaunchForce = m_MaxLaunchForce;
-                Fire ();
-            }
-            // Otherwise, if the fire button has just started being pressed...
-            else if (Input.GetButtonDown (m_FireButton))
-            {
-                // ... reset the fired flag and reset the launch force.
-                m_Fired = false;
-                m_CurrentLaunchForce = m_MinLaunchForce;
+                m_Shooting_Cooldown_Current += Time.deltaTime;
 
-                // Change the clip to the charging clip and start it playing.
-                m_ShootingAudio.clip = m_ChargingClip;
-                m_ShootingAudio.Play ();
-            }
-            // Otherwise, if the fire button is being held and the shell hasn't been launched yet...
-            else if (Input.GetButton (m_FireButton) && !m_Fired)
-            {
-                // Increment the launch force and update the slider.
-                m_CurrentLaunchForce += m_ChargeSpeed * Time.deltaTime;
+                if (m_Shooting_Cooldown_Current >= m_Shooting_Cooldown)             //Cooldown management
+                {
+                    m_fired = false;
+                    m_Shooting_Cooldown_Current = 0.0f;
+                    m_Shooting_Cooldown = 3.0f;
 
-                m_AimSlider.value = m_CurrentLaunchForce;
+                }
             }
-            // Otherwise, if the fire button is released and the shell hasn't been launched yet...
-            else if (Input.GetButtonUp (m_FireButton) && !m_Fired)
+
+            if (m_AI_Controlled)
             {
-                // ... launch the shell.
-                Fire ();
+                if (!m_fired)
+                {
+                    FindSuitableAngle();                                                                          
+
+                    if (m_Shooting_Angle_Found)                                                                   
+                    {
+                        AI_Fire();
+                    }
+                }
+            }
+            else
+            {
+                if (Input.GetButtonUp(m_fireButton) && !m_fired)
+                {
+                    Fire();
+                }
             }
         }
 
+        // Aim 
+        private void Aim_At_Tank()
+        {
+           
+            //Vector3 new_forward = m_tank_transform.position - transform.position;                                 // Getting new vector.
 
+            //m_turret_renderer.transform.forward = new_forward;                                                      // Redirecting the turret_transform with the new vector.
+            //m_FireTransform.forward = m_turret_renderer.transform.forward;                                          // Also applying the new forward vector to the fire_transform.
+        }
+
+
+        // Get maximum radius range
+        private float Get_Max_Shooting_Range()
+        {
+            float g = Physics.gravity.y;                                       // Gravity.
+            float p = m_LaunchForce;                                           // Shell Speed (Constant).
+            float m = 45.0f;                                                   // Following Projectile Motion, max range occurs in a 45º angle.
+
+            float Max_Shooting_Range = ((p * p) * Mathf.Sin(2 * m)) / g;       // Projectile motion equation.
+
+            Max_Shooting_Range = Mathf.Abs(Max_Shooting_Range);                // Absolute Value for negative outcomes.
+
+            Debug.Log(Max_Shooting_Range);
+
+            return Max_Shooting_Range;
+        }
+
+        // AI controlled fire
+        private void AI_Fire()
+        {
+            m_Shooting_Angle_Found = false;
+            m_fired = true;
+
+            m_FireTransform.Rotate(-m_Shooting_Angle, 0.0f, 0.0f);
+
+            Rigidbody shellInstance = Instantiate(m_Shell, m_FireTransform.position, m_FireTransform.rotation) as Rigidbody;
+            shellInstance.velocity = m_LaunchForce * m_FireTransform.forward;
+
+            m_ShootingAudio.clip = m_FireClip;
+            m_ShootingAudio.Play();
+        }
+
+        // Angle Management
+        private void FindSuitableAngle()
+        {
+            float Distance_To_Tank = Vector3.Distance(m_FireTransform.position, m_tank_transform.position);
+
+            if (Distance_To_Tank < m_Shooting_Radius)                                       // Tank within shooting radius.
+            {
+                // tan(a) = (v^2 +- sqrt(v^4 - g(gx^2 + 2yv^2))) / gx;
+                float g = Physics.gravity.y;                                                 // Gravity.
+                float p = m_LaunchForce;                                                     // Shell Speed (Constant)
+                float x = Distance_To_Tank;                                                  // Distance to the tank.
+                float y = m_tank_transform.position.y;                                  
+
+                if (y < 0.0f)                                                           
+                {
+                    y = 0.0f;
+                }
+
+                // Dividing operations for easier equation.
+                float x2 = x * x;
+                float p2 = p * p;                                                                                  
+                float p4 = p * p * p * p;                                                                           
+
+                float tan = (p2 - Mathf.Sqrt(p4 - g * (g * x2 + 2 * y * p2))) / (g * x);   
+                float rad_angle = Mathf.Atan(tan);
+
+                m_Shooting_Angle = Test_Suitable_Angle(rad_angle);                              
+
+                if (m_Shooting_Angle > 0.0f)
+                {
+                    m_Shooting_Angle_Found = true;
+                }
+            }
+            
+        }
+
+        private float Test_Suitable_Angle(double angle)                                  // Test_Suitable_Angle returns the angle in degrees, with 0 if an error is detected.
+        {
+            float ret = 0.0f;
+
+            float posible_angle = Math.Abs((float)angle * Mathf.Rad2Deg);
+
+            if ((posible_angle > m_Min_Angle && posible_angle < m_Max_Angle))                            // Angle is within max, min limits.    
+            {
+                ret = posible_angle;
+            }
+            else
+            {
+                Debug.LogError("[ERROR]");
+            }
+
+            return ret;
+        }
+        // Student adeed end.
+       
+
+        // Kept for testing porpouses.
         private void Fire ()
         {
             // Set the fired flag so only Fire is only called once.
-            m_Fired = true;
+            m_fired = true;
 
             // Create an instance of the shell and store a reference to it's rigidbody.
             Rigidbody shellInstance =
                 Instantiate (m_Shell, m_FireTransform.position, m_FireTransform.rotation) as Rigidbody;
 
             // Set the shell's velocity to the launch force in the fire position's forward direction.
-            shellInstance.velocity = m_CurrentLaunchForce * m_FireTransform.forward; 
 
             // Change the clip to the firing clip and play it.
             m_ShootingAudio.clip = m_FireClip;
             m_ShootingAudio.Play ();
 
             // Reset the launch force.  This is a precaution in case of missing button events.
-            m_CurrentLaunchForce = m_MinLaunchForce;
         }
     }
 }
